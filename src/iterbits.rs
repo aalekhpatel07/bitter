@@ -1,15 +1,16 @@
 /// Iterate over chunks of bits of a fixed size from a byte stream.
 pub trait IterBits<'a>
-where Self: Sized
+where
+    Self: Sized,
 {
     /// Return an iterator over chunks of bits of the provided size.
-    /// 
+    ///
     /// Example:
-    /// 
+    ///
     /// 1. Iterate in chunks of 4 bits over a bunch of bytes.
     /// ```rust
     /// use bitter::{IterBits, Bits};
-    /// 
+    ///
     /// // 2 bytes.
     /// let bytes = [0xff, 0xf0];
     /// let mut iter = bytes.iter().copied();
@@ -20,11 +21,11 @@ where Self: Sized
     /// assert_eq!(iter.next(), Some(Bits::Full(0x00)));
     /// assert_eq!(iter.next(), None);
     /// ```
-    /// 
+    ///
     /// 2. Iterate in chunks of 3 bits over 2 bytes (i.e. 5 full chunks, and 1 partial chunk of 1 bit.)
     /// ```rust
     /// use bitter::{IterBits, Bits};
-    /// 
+    ///
     /// // 2 bytes.
     /// let bytes = [0xff, 0xf0];
     /// let mut iter = bytes.iter().copied();
@@ -41,14 +42,15 @@ where Self: Sized
 }
 
 impl<'it, I> IterBits<'it> for I
-where I: Iterator<Item=u8> {
+where
+    I: Iterator<Item = u8>,
+{
     fn iter_bits(&'it mut self, num_bits: usize) -> BitIterator<'it, Self> {
         BitIterator::new(self, num_bits)
     }
 }
 
-
-/// An iterator that tracks chunks of bits that need to be 
+/// An iterator that tracks chunks of bits that need to be
 /// yielded from a stream of bytes.
 #[derive(Debug)]
 pub struct BitIterator<'a, I> {
@@ -57,14 +59,14 @@ pub struct BitIterator<'a, I> {
     previous: Option<u8>,
     previous_trailing_bits: usize,
     current: Option<u8>,
-    start_index: usize
+    start_index: usize,
 }
 
-
-impl<'a, I> BitIterator<'a, I> 
-where I: Iterator<Item=u8>
+impl<'a, I> BitIterator<'a, I>
+where
+    I: Iterator<Item = u8>,
 {
-    /// Create a new BitIterator from the provided iterator 
+    /// Create a new BitIterator from the provided iterator
     /// of bytes, that yields chunks of bits of the provided size.
     pub fn new(iter: &'a mut I, num_bits: usize) -> Self {
         Self {
@@ -73,7 +75,7 @@ where I: Iterator<Item=u8>
             previous: None,
             current: None,
             previous_trailing_bits: 0,
-            start_index: 0
+            start_index: 0,
         }
     }
 }
@@ -83,7 +85,7 @@ where I: Iterator<Item=u8>
 /// left, and is of the provided size.
 fn bits_at(byte: u8, start_left: usize, length: usize) -> u8 {
     let mut res: u8 = 0;
-    for idx in start_left..start_left+length {
+    for idx in start_left..start_left + length {
         res |= byte & (1 << (7 - idx))
     }
     res >> (8 - (start_left + length))
@@ -95,7 +97,7 @@ fn bits_at(byte: u8, start_left: usize, length: usize) -> u8 {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Bits {
     Full(u8),
-    Partial(u8)
+    Partial(u8),
 }
 
 impl From<Bits> for u8 {
@@ -105,12 +107,11 @@ impl From<Bits> for u8 {
 }
 
 impl Bits {
-
     /// Return the underlying byte.
     pub fn value(&self) -> u8 {
         match self {
             Self::Full(value) => *value,
-            Self::Partial(value) => *value
+            Self::Partial(value) => *value,
         }
     }
 
@@ -119,7 +120,7 @@ impl Bits {
     pub fn as_full(&self) -> Option<u8> {
         match self {
             Self::Full(value) => Some(*value),
-            _ => None
+            _ => None,
         }
     }
 
@@ -128,14 +129,14 @@ impl Bits {
     pub fn as_partial(&self) -> Option<u8> {
         match self {
             Self::Partial(value) => Some(*value),
-            _ => None
+            _ => None,
         }
     }
 }
 
-
-impl<I> Iterator for BitIterator<'_, I> 
-where I: Iterator<Item=u8>
+impl<I> Iterator for BitIterator<'_, I>
+where
+    I: Iterator<Item = u8>,
 {
     type Item = Bits;
 
@@ -144,17 +145,21 @@ where I: Iterator<Item=u8>
             match self.iter.next() {
                 Some(byte) => {
                     self.current = Some(byte);
-                },
+                }
                 None => {
                     if let Some(previous) = self.previous {
                         if self.start_index == 8 {
                             return None;
                         }
-                        let val = bits_at(previous, 8 - self.previous_trailing_bits, self.previous_trailing_bits);
+                        let val = bits_at(
+                            previous,
+                            8 - self.previous_trailing_bits,
+                            self.previous_trailing_bits,
+                        );
                         self.previous = None;
-                        return Some(Bits::Partial(val))
+                        return Some(Bits::Partial(val));
                     }
-                    return None
+                    return None;
                 }
             }
         }
@@ -222,7 +227,6 @@ mod tests {
         }
         assert_eq!(bit_iter.next(), None);
     }
-
 
     #[test]
     fn test_bit_iterator_all_zeroes_two_trailing() {

@@ -1,6 +1,2 @@
 mod iterbits;
-pub use iterbits::{
-    BitIterator,
-    Bits,
-    IterBits
-};
+pub use iterbits::{BitIterator, Bits, IterBits};
