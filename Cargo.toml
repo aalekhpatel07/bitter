@@ -1,0 +1,9 @@
+[package]
+name = "bitter"
+version = "0.1.0"
+edition = "2021"
+authors = ["Aalekh Patel <aalekh.gwpeck.7998@icloud.com>"]
+license-file= "LICENSE.md"
+readme = "README.md"
+
+[dependencies]
